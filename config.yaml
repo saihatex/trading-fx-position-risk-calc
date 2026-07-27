@@ -1,0 +1,47 @@
+# Prop firm / broker profiles.
+# Override pip_value_per_lot per instrument when your firm differs from defaults.
+# USDJPY pip value shifts with price — set quote_rate at runtime or update here.
+
+default_profile: ftmo
+
+lot:
+  min: 0.01
+  step: 0.01
+  max: 100.0
+
+profiles:
+  ftmo:
+    label: FTMO
+    account_currency: USD
+    instruments:
+      EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      AUDUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      USDCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.5 }
+      XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+      BTCUSD: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
+
+  the5ers:
+    label: The5ers
+    account_currency: USD
+    instruments:
+      EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+
+  fundednext:
+    label: FundedNext
+    account_currency: USD
+    instruments:
+      EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+
+  custom:
+    label: Custom
+    account_currency: USD
+    instruments:
+      EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
