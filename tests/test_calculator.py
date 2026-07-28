@@ -77,3 +77,87 @@ def test_profile_specific_instrument():
 
     assert xau.pip_size == 0.01
     assert xau.contract_size == 100
+
+
+def test_jpy_pair_resolution_unified():
+    profile = get_profile("ftmo")
+    usdjpy = resolve_instrument(profile, "USDJPY", quote_rate=155.0)
+    eurjpy = resolve_instrument(profile, "EURJPY", quote_rate=155.0)
+
+    # 100,000 * 0.01 / 155.0 = 6.4516
+    expected_pip_value = round(100_000 * 0.01 / 155.0, 4)
+    assert usdjpy.pip_value_per_lot == expected_pip_value
+    assert eurjpy.pip_value_per_lot == expected_pip_value
+
+
+def test_effective_risk_lot_rounding():
+    profile = get_profile("ftmo")
+    instrument = resolve_instrument(profile, "EURUSD")
+    lot_rules = get_lot_rules()
+
+    # Balance 1,540, 1% risk = $15.40
+    # 25 pips SL -> raw lot = 15.40 / 250 = 0.0616 -> rounded lot = 0.06
+    # Actual potential loss = 0.06 * 250 = $15.00
+    # Effective risk % = 15.00 / 1540 = 0.974%
+    result = calculate_position(
+        trade=TradeInput(
+            balance=1540,
+            risk_pct=1.0,
+            entry=1.0850,
+            stop_loss=1.0825,
+        ),
+        instrument=instrument,
+        profile_name=profile.label,
+        lot_rules=lot_rules,
+    )
+
+    assert result.lot_size == 0.06
+    assert result.potential_loss == 15.00
+    assert result.effective_risk_pct == round((15.00 / 1540) * 100, 3)
+
+
+def test_spread_inclusion():
+    profile = get_profile("ftmo")
+    instrument = resolve_instrument(profile, "EURUSD")
+    lot_rules = get_lot_rules()
+
+    result = calculate_position(
+        trade=TradeInput(
+            balance=10_000,
+            risk_pct=1.0,
+            entry=1.0850,
+            stop_loss=1.0830,  # 20 pips SL
+            spread_pips=5.0,  # +5 pips spread = 25 pips total
+        ),
+        instrument=instrument,
+        profile_name=profile.label,
+        lot_rules=lot_rules,
+    )
+
+    assert result.sl_pips == 20.0
+    assert result.spread_pips == 5.0
+    assert result.effective_sl_pips == 25.0
+    # 100 risk amount / (25 pips * 10) = 0.40 lots
+    assert result.lot_size == 0.40
+    assert result.spread_cost == round(0.40 * 5.0 * 10.0, 2)
+    assert result.potential_loss == 100.0
+
+
+def test_cli_parser_args():
+    from cli import build_parser
+
+    parser = build_parser()
+    args = parser.parse_args([
+        "--symbol", "EURJPY",
+        "--balance", "10000",
+        "--risk", "1",
+        "--entry", "160.50",
+        "--sl", "160.00",
+        "--quote-rate", "155.0",
+        "--spread", "2.0",
+    ])
+
+    assert args.symbol == "EURJPY"
+    assert args.quote_rate == 155.0
+    assert args.spread == 2.0
+
