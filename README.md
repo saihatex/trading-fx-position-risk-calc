@@ -8,8 +8,11 @@ Supports multiple broker/prop firm profiles via `config.yaml`, so pip values and
 
 - Lot size from balance, risk %, entry, and stop loss price
 - Automatic direction detection (long/short)
+- Effective risk percentage calculation considering lot size rounding
+- Spread inclusion support (`--spread`) in total risk and position sizing
 - Stop loss and take profit distance in pips
 - Risk/reward ratio from price levels
+- Dynamic pip value calculation for JPY pairs via USD/JPY exchange rate
 - Potential loss and profit in account currency
 - Broker profiles with per-instrument pip value and contract size
 - Lot rounding to broker minimum/step
@@ -38,7 +41,8 @@ python cli.py \
   --risk 1 \
   --entry 1.0850 \
   --sl 1.0830 \
-  --tp 1.0890
+  --tp 1.0890 \
+  --spread 1.5
 ```
 
 Example output:
@@ -49,19 +53,20 @@ Instrument:       EURUSD
 Direction:        LONG
 
 Balance:          $10,000.00
-Risk:             1.0% ($100.00)
+Risk (requested): 1.0% ($100.00)
+Effective risk:   0.99% ($98.90)
 
 Entry:            1.085
-Stop Loss:        1.083  (20.0 pips)
+Stop Loss:        1.083  (20.0 pips + 1.5 spread = 21.5 pips total)
 Take Profit:      1.089  (40.0 pips)
 R:R:              1:2.0
 
 Pip value / lot:  $10.0000
-Lot size:         0.50
-Position value:   $50,000.00
-
-Potential loss:   $100.00
-Potential profit: $200.00
+Lot size:         0.46
+Position value:   $46,000.00
+Spread cost:      $6.90
+Potential loss:   $98.90
+Potential profit: $184.00
 ```
 
 ## Configuration
@@ -91,13 +96,19 @@ Each profile defines instrument-level:
 | `contract_size` | Units per 1.0 lot |
 | `pip_value_per_lot` | Account-currency value of one pip at 1.0 lot |
 
-For pairs like USDJPY, pass `--quote-rate` or enter it in interactive mode to recalculate pip value dynamically.
+For JPY pairs (e.g., `USDJPY` or `EURJPY`), pass `--quote-rate` (the USD/JPY exchange rate) or enter it in interactive mode to recalculate pip value dynamically.
 
 ## Tests
 
 ```bash
 pytest tests/ -v
 ```
+
+## Known Issues & TODO
+
+- [ ] Add live rate fetching via API (e.g. MetaTrader WebAPI or Yahoo Finance) so quote rate for JPY pairs doesn't need manual input
+- [ ] Account currency conversions for non-USD accounts (e.g., EUR/GBP accounts trading USD pairs)
+- [ ] Add option to export calculation history to CSV/JSON
 
 ## License
 
