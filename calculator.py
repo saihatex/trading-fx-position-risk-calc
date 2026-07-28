@@ -18,6 +18,7 @@ class TradeInput:
     entry: float
     stop_loss: float
     take_profit: float | None = None
+    spread_pips: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -28,10 +29,13 @@ class PositionResult:
     balance: float
     risk_pct: float
     risk_amount: float
+    effective_risk_pct: float
     entry: float
     stop_loss: float
     take_profit: float | None
     sl_pips: float
+    spread_pips: float
+    effective_sl_pips: float
     tp_pips: float | None
     rr_ratio: float | None
     pip_value_per_lot: float
@@ -40,6 +44,7 @@ class PositionResult:
     potential_loss: float
     potential_profit: float | None
     position_value: float
+    spread_cost: float
 
 
 def detect_direction(entry: float, stop_loss: float) -> Direction:
@@ -87,12 +92,16 @@ def calculate_position(
         raise ValueError("Balance must be positive")
     if not 0 < trade.risk_pct <= 100:
         raise ValueError("Risk percentage must be between 0 and 100")
+    if trade.spread_pips < 0:
+        raise ValueError("Spread must be non-negative")
 
     direction = detect_direction(trade.entry, trade.stop_loss)
     sl_pips = price_distance_to_pips(trade.entry - trade.stop_loss, instrument.pip_size)
 
     if sl_pips <= 0:
         raise ValueError("Stop loss distance must be greater than zero")
+
+    effective_sl_pips = sl_pips + trade.spread_pips
 
     tp_pips: float | None = None
     rr_ratio: float | None = None
@@ -104,10 +113,13 @@ def calculate_position(
         rr_ratio = round(tp_pips / sl_pips, 2)
 
     risk_amount = trade.balance * (trade.risk_pct / 100)
-    lot_size_raw = risk_amount / (sl_pips * instrument.pip_value_per_lot)
+    lot_size_raw = risk_amount / (effective_sl_pips * instrument.pip_value_per_lot)
     lot_size = round_lot(lot_size_raw, lot_rules)
 
-    potential_loss = round(lot_size * sl_pips * instrument.pip_value_per_lot, 2)
+    potential_loss = round(lot_size * effective_sl_pips * instrument.pip_value_per_lot, 2)
+    spread_cost = round(lot_size * trade.spread_pips * instrument.pip_value_per_lot, 2)
+    effective_risk_pct = round((potential_loss / trade.balance) * 100, 3)
+
     if tp_pips is not None:
         potential_profit = round(lot_size * tp_pips * instrument.pip_value_per_lot, 2)
 
@@ -120,10 +132,13 @@ def calculate_position(
         balance=trade.balance,
         risk_pct=trade.risk_pct,
         risk_amount=round(risk_amount, 2),
+        effective_risk_pct=effective_risk_pct,
         entry=trade.entry,
         stop_loss=trade.stop_loss,
         take_profit=trade.take_profit,
         sl_pips=round(sl_pips, 1),
+        spread_pips=round(trade.spread_pips, 1),
+        effective_sl_pips=round(effective_sl_pips, 1),
         tp_pips=round(tp_pips, 1) if tp_pips is not None else None,
         rr_ratio=rr_ratio,
         pip_value_per_lot=instrument.pip_value_per_lot,
@@ -132,6 +147,7 @@ def calculate_position(
         potential_loss=potential_loss,
         potential_profit=potential_profit,
         position_value=position_value,
+        spread_cost=spread_cost,
     )
 
 
@@ -142,11 +158,18 @@ def format_result(result: PositionResult) -> str:
         f"Direction:        {result.direction.value.upper()}",
         "",
         f"Balance:          ${result.balance:,.2f}",
-        f"Risk:             {result.risk_pct}% (${result.risk_amount:,.2f})",
+        f"Risk (requested): {result.risk_pct}% (${result.risk_amount:,.2f})",
+        f"Effective risk:   {result.effective_risk_pct:.2f}% (${result.potential_loss:,.2f})",
         "",
         f"Entry:            {result.entry}",
-        f"Stop Loss:        {result.stop_loss}  ({result.sl_pips} pips)",
     ]
+
+    if result.spread_pips > 0:
+        lines.append(
+            f"Stop Loss:        {result.stop_loss}  ({result.sl_pips} pips + {result.spread_pips} spread = {result.effective_sl_pips} pips total)"
+        )
+    else:
+        lines.append(f"Stop Loss:        {result.stop_loss}  ({result.sl_pips} pips)")
 
     if result.take_profit is not None:
         lines.append(f"Take Profit:      {result.take_profit}  ({result.tp_pips} pips)")
@@ -158,10 +181,13 @@ def format_result(result: PositionResult) -> str:
             f"Pip value / lot:  ${result.pip_value_per_lot:.4f}",
             f"Lot size:         {result.lot_size:.2f}",
             f"Position value:   ${result.position_value:,.2f}",
-            "",
-            f"Potential loss:   ${result.potential_loss:,.2f}",
         ]
     )
+
+    if result.spread_pips > 0:
+        lines.append(f"Spread cost:      ${result.spread_cost:,.2f}")
+
+    lines.append(f"Potential loss:   ${result.potential_loss:,.2f}")
 
     if result.potential_profit is not None:
         lines.append(f"Potential profit: ${result.potential_profit:,.2f}")
