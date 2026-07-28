@@ -88,17 +88,8 @@ def resolve_instrument(
 
     spec = profile.instruments[symbol]
 
-    # Dynamic pip value for JPY-quoted pairs when quote_rate is supplied.
-    if quote_rate and symbol.endswith("JPY") and not symbol.startswith("USD"):
-        pip_value = spec.contract_size * spec.pip_size / quote_rate
-        return InstrumentSpec(
-            symbol=spec.symbol,
-            pip_size=spec.pip_size,
-            contract_size=spec.contract_size,
-            pip_value_per_lot=round(pip_value, 4),
-        )
-
-    if quote_rate and symbol == "USDJPY":
+    # Dynamic pip value for JPY pairs
+    if quote_rate and symbol.endswith("JPY"):
         pip_value = spec.contract_size * spec.pip_size / quote_rate
         return InstrumentSpec(
             symbol=spec.symbol,
