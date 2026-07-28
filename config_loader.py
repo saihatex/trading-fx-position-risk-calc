@@ -76,6 +76,25 @@ def get_profile(name: str | None = None, config: dict[str, Any] | None = None) -
     )
 
 
+def get_required_conversion_pair(symbol: str) -> tuple[str | None, str]:
+    """Returns (conversion_pair_symbol, operation) needed for USD account pip value conversion."""
+    symbol = symbol.upper()
+    if symbol.endswith("USD"):
+        return None, "direct"
+
+    if symbol.startswith("USD"):
+        return symbol, "divide"
+
+    if len(symbol) == 6:
+        quote_curr = symbol[3:]
+        if quote_curr in ("JPY", "CAD", "CHF"):
+            return f"USD{quote_curr}", "divide"
+        if quote_curr in ("GBP", "AUD", "NZD", "EUR"):
+            return f"{quote_curr}USD", "multiply"
+
+    return None, "direct"
+
+
 def resolve_instrument(
     profile: Profile,
     symbol: str,
@@ -88,15 +107,21 @@ def resolve_instrument(
 
     spec = profile.instruments[symbol]
 
-    # Dynamic pip value for JPY pairs
-    if quote_rate and symbol.endswith("JPY"):
-        pip_value = spec.contract_size * spec.pip_size / quote_rate
-        return InstrumentSpec(
-            symbol=spec.symbol,
-            pip_size=spec.pip_size,
-            contract_size=spec.contract_size,
-            pip_value_per_lot=round(pip_value, 4),
-        )
+    if quote_rate:
+        conv_pair, mode = get_required_conversion_pair(symbol)
+        if conv_pair:
+            base_pip_amount = spec.contract_size * spec.pip_size
+            if mode == "divide":
+                pip_value = base_pip_amount / quote_rate
+            else:
+                pip_value = base_pip_amount * quote_rate
+
+            return InstrumentSpec(
+                symbol=spec.symbol,
+                pip_size=spec.pip_size,
+                contract_size=spec.contract_size,
+                pip_value_per_lot=round(pip_value, 4),
+            )
 
     return spec
 

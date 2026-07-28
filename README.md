@@ -13,10 +13,8 @@ Supports multiple broker/prop firm profiles via `config.yaml`, so pip values and
 - Spread inclusion support (`--spread`) in total risk and position sizing
 - Stop loss and take profit distance in pips
 - Risk/reward ratio from price levels
-- Dynamic pip value calculation for JPY pairs via USD/JPY exchange rate
-- Potential loss and profit in account currency
-- Broker profiles with per-instrument pip value and contract size
-- Lot rounding to broker minimum/step
+- Universal dynamic pip value calculation for indirect (`USD/XXX`) and cross pairs (`XXX/YYY`) via conversion rate
+- Comprehensive instrument catalog across Forex majors/crosses, metals (`XAUUSD`, `XAGUSD`), indices (`US30`, `NAS100`, `SPX500`, `GER40`), and crypto (`BTCUSD`, `ETHUSD`)
 
 ## Install
 
@@ -109,7 +107,12 @@ Each profile defines instrument-level:
 | `contract_size` | Units per 1.0 lot |
 | `pip_value_per_lot` | Account-currency value of one pip at 1.0 lot |
 
-For JPY pairs (e.g., `USDJPY` or `EURJPY`), pass `--quote-rate` (the USD/JPY exchange rate) or enter it in interactive mode to recalculate pip value dynamically.
+### Dynamic Pip Value Conversions
+
+For pairs where USD is not the quote currency, pass `--quote-rate` (or enter it in interactive mode):
+- **Indirect Pairs (`USD/XXX`, e.g. `USDJPY`, `USDCAD`, `USDCHF`)**: Divided by conversion rate.
+- **Cross Pairs with JPY/CAD/CHF Quote (e.g. `EURJPY`, `GBPJPY`, `EURCAD`)**: Divided by `USD/YYY` rate.
+- **Cross Pairs with GBP/AUD/NZD/EUR Quote (e.g. `EURGBP`, `EURAUD`)**: Multiplied by `YYY/USD` rate (e.g. `GBPUSD` rate for `EURGBP`).
 
 ## Tests
 

@@ -218,3 +218,16 @@ def test_risk_input_validation():
         )
 
 
+def test_universal_dynamic_conversion():
+    profile = get_profile("ftmo")
+
+    # 1. Indirect pair: USDCAD at 1.3500 -> 100,000 * 0.0001 / 1.35 = 7.4074
+    usdcad = resolve_instrument(profile, "USDCAD", quote_rate=1.3500)
+    assert usdcad.pip_value_per_lot == round(10.0 / 1.3500, 4)
+
+    # 2. Cross pair multiplying: EURGBP with GBPUSD at 1.2700 -> 10.0 * 1.27 = 12.70
+    eurgbp = resolve_instrument(profile, "EURGBP", quote_rate=1.2700)
+    assert eurgbp.pip_value_per_lot == round(10.0 * 1.2700, 4)
+
+
+

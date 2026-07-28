@@ -4,7 +4,13 @@ import argparse
 import sys
 
 from calculator import TradeInput, calculate_position, format_result
-from config_loader import get_lot_rules, get_profile, list_profiles, resolve_instrument
+from config_loader import (
+    get_lot_rules,
+    get_profile,
+    get_required_conversion_pair,
+    list_profiles,
+    resolve_instrument,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,7 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--quote-rate",
         type=float,
-        help="Current USD/JPY exchange rate (required for JPY pairs, e.g. USDJPY or EURJPY)",
+        help="Conversion exchange rate for indirect or cross pairs (e.g. USDJPY rate for EURJPY, GBPUSD rate for EURGBP)",
     )
     parser.add_argument(
         "--spread",
@@ -100,8 +106,10 @@ def run_interactive() -> None:
     symbol = input("Symbol: ").strip().upper()
 
     quote_rate = None
-    if symbol.endswith("JPY"):
-        quote_rate = prompt_optional_float("USD/JPY rate (enter USD/JPY rate even if trading a JPY cross)")
+    conv_pair, mode = get_required_conversion_pair(symbol)
+    if conv_pair:
+        op_desc = f"needed for {symbol}"
+        quote_rate = prompt_optional_float(f"Rate for {conv_pair} ({op_desc})")
 
     balance = prompt_float("Account balance")
     risk_pct, risk_amount = prompt_risk()

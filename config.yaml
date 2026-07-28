@@ -12,15 +12,40 @@ profiles:
     label: FTMO
     account_currency: USD
     instruments:
+      # Forex Majors & Direct Pairs
       EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
       GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      AUDUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      NZDUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      # Indirect Pairs (USD/XXX)
       USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      USDCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.40 }
+      USDCHF: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 11.10 }
+      # JPY Crosses
       EURJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
       GBPJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
-      AUDUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
-      USDCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.5 }
+      AUDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      CADJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      CHFJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      # Other Crosses
+      EURGBP: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 12.70 }
+      EURAUD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 6.60 }
+      EURCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.40 }
+      EURCHF: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 11.10 }
+      GBPAUD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 6.60 }
+      GBPCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.40 }
+      AUDCAD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 7.40 }
+      # Metals
       XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+      XAGUSD: { pip_size: 0.001, contract_size: 5000, pip_value_per_lot: 5.0 }
+      # Indices
+      US30: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
+      NAS100: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
+      SPX500: { pip_size: 0.1, contract_size: 10, pip_value_per_lot: 1.0 }
+      GER40: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.1 }
+      # Crypto
       BTCUSD: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
+      ETHUSD: { pip_size: 0.1, contract_size: 10, pip_value_per_lot: 1.0 }
 
   the5ers:
     label: The5ers
@@ -29,7 +54,10 @@ profiles:
       EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
       GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
       USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      EURJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
       XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+      US30: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
+      BTCUSD: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
 
   fundednext:
     label: FundedNext
@@ -37,11 +65,15 @@ profiles:
     instruments:
       EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
       GBPUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
+      EURJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
       XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
+      NAS100: { pip_size: 1.0, contract_size: 1, pip_value_per_lot: 1.0 }
 
   custom:
     label: Custom
     account_currency: USD
     instruments:
       EURUSD: { pip_size: 0.0001, contract_size: 100000, pip_value_per_lot: 10.0 }
+      USDJPY: { pip_size: 0.01, contract_size: 100000, pip_value_per_lot: 6.67 }
       XAUUSD: { pip_size: 0.01, contract_size: 100, pip_value_per_lot: 1.0 }
