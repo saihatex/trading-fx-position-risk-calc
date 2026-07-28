@@ -25,7 +25,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--quote-rate",
         type=float,
-        help="Current quote rate for dynamic pip value (useful for USDJPY)",
+        help="Current USD/JPY exchange rate (required for JPY pairs, e.g. USDJPY or EURJPY)",
+    )
+    parser.add_argument(
+        "--spread",
+        type=float,
+        default=0.0,
+        help="Spread in pips to include in risk calculation (default: 0.0)",
     )
     parser.add_argument(
         "--interactive",
@@ -64,15 +70,16 @@ def run_interactive() -> None:
 
     quote_rate = None
     if symbol.endswith("JPY"):
-        quote_rate = prompt_optional_float("Quote rate for pip value")
+        quote_rate = prompt_optional_float("USD/JPY rate (enter USD/JPY rate even if trading a JPY cross)")
 
     balance = prompt_float("Account balance")
     risk = prompt_float("Risk %")
     entry = prompt_float("Entry price")
     sl = prompt_float("Stop loss price")
     tp = prompt_optional_float("Take profit price")
+    spread = prompt_optional_float("Spread in pips") or 0.0
 
-    _run_calculation(profile.name, symbol, balance, risk, entry, sl, tp, quote_rate)
+    _run_calculation(profile.name, symbol, balance, risk, entry, sl, tp, quote_rate, spread)
 
 
 def _run_calculation(
@@ -84,6 +91,7 @@ def _run_calculation(
     sl: float,
     tp: float | None,
     quote_rate: float | None,
+    spread: float = 0.0,
 ) -> None:
     profile = get_profile(profile_name)
     instrument = resolve_instrument(profile, symbol, quote_rate=quote_rate)
@@ -95,6 +103,7 @@ def _run_calculation(
         entry=entry,
         stop_loss=sl,
         take_profit=tp,
+        spread_pips=spread,
     )
 
     result = calculate_position(
@@ -124,6 +133,7 @@ def main(argv: list[str] | None = None) -> int:
         sl=args.sl,
         tp=args.tp,
         quote_rate=args.quote_rate,
+        spread=args.spread,
     )
     return 0
 
