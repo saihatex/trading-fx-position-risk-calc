@@ -14,9 +14,10 @@ class Direction(str, Enum):
 @dataclass(frozen=True)
 class TradeInput:
     balance: float
-    risk_pct: float
     entry: float
     stop_loss: float
+    risk_pct: float | None = None
+    risk_amount: float | None = None
     take_profit: float | None = None
     spread_pips: float = 0.0
 
@@ -90,8 +91,22 @@ def calculate_position(
 ) -> PositionResult:
     if trade.balance <= 0:
         raise ValueError("Balance must be positive")
-    if not 0 < trade.risk_pct <= 100:
-        raise ValueError("Risk percentage must be between 0 and 100")
+
+    if trade.risk_pct is None and trade.risk_amount is None:
+        raise ValueError("Either risk percentage or risk cash amount must be provided")
+
+    if trade.risk_pct is not None:
+        if not 0 < trade.risk_pct <= 100:
+            raise ValueError("Risk percentage must be between 0 and 100")
+        risk_pct = trade.risk_pct
+        risk_amount = trade.balance * (risk_pct / 100)
+    else:
+        assert trade.risk_amount is not None
+        if trade.risk_amount <= 0 or trade.risk_amount > trade.balance:
+            raise ValueError(f"Risk amount must be between 0 and balance (${trade.balance:,.2f})")
+        risk_amount = trade.risk_amount
+        risk_pct = round((risk_amount / trade.balance) * 100, 3)
+
     if trade.spread_pips < 0:
         raise ValueError("Spread must be non-negative")
 
@@ -112,7 +127,6 @@ def calculate_position(
         tp_pips = price_distance_to_pips(trade.take_profit - trade.entry, instrument.pip_size)
         rr_ratio = round(tp_pips / sl_pips, 2)
 
-    risk_amount = trade.balance * (trade.risk_pct / 100)
     lot_size_raw = risk_amount / (effective_sl_pips * instrument.pip_value_per_lot)
     lot_size = round_lot(lot_size_raw, lot_rules)
 
@@ -130,7 +144,7 @@ def calculate_position(
         instrument=instrument.symbol,
         direction=direction,
         balance=trade.balance,
-        risk_pct=trade.risk_pct,
+        risk_pct=risk_pct,
         risk_amount=round(risk_amount, 2),
         effective_risk_pct=effective_risk_pct,
         entry=trade.entry,

@@ -161,3 +161,60 @@ def test_cli_parser_args():
     assert args.quote_rate == 155.0
     assert args.spread == 2.0
 
+
+def test_risk_specified_in_cash_amount():
+    profile = get_profile("ftmo")
+    instrument = resolve_instrument(profile, "EURUSD")
+    lot_rules = get_lot_rules()
+
+    # Risk specified in fixed dollar amount: $200 on $10,000 balance -> 2.0%
+    result = calculate_position(
+        trade=TradeInput(
+            balance=10_000,
+            risk_amount=200.0,
+            entry=1.0850,
+            stop_loss=1.0830,
+        ),
+        instrument=instrument,
+        profile_name=profile.label,
+        lot_rules=lot_rules,
+    )
+
+    assert result.risk_amount == 200.0
+    assert result.risk_pct == 2.0
+    assert result.lot_size == 1.0  # 200 / (20 * 10) = 1.0 lot
+
+
+def test_risk_input_validation():
+    profile = get_profile("ftmo")
+    instrument = resolve_instrument(profile, "EURUSD")
+    lot_rules = get_lot_rules()
+
+    # Missing both risk_pct and risk_amount
+    with pytest.raises(ValueError, match="Either risk percentage or risk cash amount must be provided"):
+        calculate_position(
+            trade=TradeInput(
+                balance=10_000,
+                entry=1.0850,
+                stop_loss=1.0830,
+            ),
+            instrument=instrument,
+            profile_name=profile.label,
+            lot_rules=lot_rules,
+        )
+
+    # Invalid cash risk amount (exceeding balance)
+    with pytest.raises(ValueError, match="Risk amount must be between 0 and balance"):
+        calculate_position(
+            trade=TradeInput(
+                balance=10_000,
+                risk_amount=15_000.0,
+                entry=1.0850,
+                stop_loss=1.0830,
+            ),
+            instrument=instrument,
+            profile_name=profile.label,
+            lot_rules=lot_rules,
+        )
+
+

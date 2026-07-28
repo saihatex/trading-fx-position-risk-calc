@@ -6,7 +6,8 @@ Supports multiple broker/prop firm profiles via `config.yaml`, so pip values and
 
 ## Features
 
-- Lot size from balance, risk %, entry, and stop loss price
+- Lot size from balance, risk % or fixed cash amount ($), entry, and stop loss price
+- Dual risk mode: specify risk in percent (`--risk 1`) or fixed dollars (`--risk-amount 100`)
 - Automatic direction detection (long/short)
 - Effective risk percentage calculation considering lot size rounding
 - Spread inclusion support (`--spread`) in total risk and position sizing
@@ -31,7 +32,7 @@ Interactive mode:
 python cli.py --interactive
 ```
 
-CLI with arguments:
+CLI with risk percentage:
 
 ```bash
 python cli.py \
@@ -43,6 +44,18 @@ python cli.py \
   --sl 1.0830 \
   --tp 1.0890 \
   --spread 1.5
+```
+
+CLI with fixed cash amount ($150 risk):
+
+```bash
+python cli.py \
+  --profile ftmo \
+  --symbol EURUSD \
+  --balance 10000 \
+  --risk-amount 150 \
+  --entry 1.0850 \
+  --sl 1.0830
 ```
 
 Example output:

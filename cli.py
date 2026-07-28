@@ -18,7 +18,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--symbol", required=False, help="Instrument symbol, e.g. EURUSD, XAUUSD")
     parser.add_argument("--balance", type=float, help="Account balance")
-    parser.add_argument("--risk", type=float, help="Risk per trade in percent, e.g. 1.0")
+    parser.add_argument("--risk", type=float, help="Risk per trade in percent, e.g. 1.0 for 1%%")
+    parser.add_argument("--risk-amount", type=float, help="Fixed risk amount in cash currency, e.g. 100.0 for $100")
     parser.add_argument("--entry", type=float, help="Entry price")
     parser.add_argument("--sl", type=float, help="Stop loss price")
     parser.add_argument("--tp", type=float, help="Take profit price")
@@ -57,6 +58,36 @@ def prompt_optional_float(label: str) -> float | None:
     return float(raw)
 
 
+def prompt_risk() -> tuple[float | None, float | None]:
+    while True:
+        raw = input("Risk (e.g. '1%' for percent or '$100' for cash amount): ").strip().replace(",", ".")
+        if not raw:
+            print("Enter a risk value.")
+            continue
+        if raw.endswith("%"):
+            try:
+                return float(raw[:-1].strip()), None
+            except ValueError:
+                pass
+        if raw.startswith("$"):
+            try:
+                return None, float(raw[1:].strip())
+            except ValueError:
+                pass
+        if raw.endswith("$"):
+            try:
+                return None, float(raw[:-1].strip())
+            except ValueError:
+                pass
+        try:
+            val = float(raw)
+            if val <= 100:
+                return val, None
+            return None, val
+        except ValueError:
+            print("Enter a valid number, e.g. '1%' or '$100'.")
+
+
 def run_interactive() -> None:
     profiles = list_profiles()
     print("Available profiles:", ", ".join(profiles))
@@ -73,20 +104,32 @@ def run_interactive() -> None:
         quote_rate = prompt_optional_float("USD/JPY rate (enter USD/JPY rate even if trading a JPY cross)")
 
     balance = prompt_float("Account balance")
-    risk = prompt_float("Risk %")
+    risk_pct, risk_amount = prompt_risk()
     entry = prompt_float("Entry price")
     sl = prompt_float("Stop loss price")
     tp = prompt_optional_float("Take profit price")
     spread = prompt_optional_float("Spread in pips") or 0.0
 
-    _run_calculation(profile.name, symbol, balance, risk, entry, sl, tp, quote_rate, spread)
+    _run_calculation(
+        profile_name=profile.name,
+        symbol=symbol,
+        balance=balance,
+        risk_pct=risk_pct,
+        risk_amount=risk_amount,
+        entry=entry,
+        sl=sl,
+        tp=tp,
+        quote_rate=quote_rate,
+        spread=spread,
+    )
 
 
 def _run_calculation(
     profile_name: str | None,
     symbol: str,
     balance: float,
-    risk: float,
+    risk_pct: float | None,
+    risk_amount: float | None,
     entry: float,
     sl: float,
     tp: float | None,
@@ -99,7 +142,8 @@ def _run_calculation(
 
     trade = TradeInput(
         balance=balance,
-        risk_pct=risk,
+        risk_pct=risk_pct,
+        risk_amount=risk_amount,
         entry=entry,
         stop_loss=sl,
         take_profit=tp,
@@ -120,7 +164,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    if args.interactive or not all([args.symbol, args.balance, args.risk, args.entry, args.sl]):
+    has_risk = args.risk is not None or args.risk_amount is not None
+
+    if args.interactive or not (all([args.symbol, args.balance, args.entry, args.sl]) and has_risk):
         run_interactive()
         return 0
 
@@ -128,7 +174,8 @@ def main(argv: list[str] | None = None) -> int:
         profile_name=args.profile,
         symbol=args.symbol,
         balance=args.balance,
-        risk=args.risk,
+        risk_pct=args.risk,
+        risk_amount=args.risk_amount,
         entry=args.entry,
         sl=args.sl,
         tp=args.tp,
