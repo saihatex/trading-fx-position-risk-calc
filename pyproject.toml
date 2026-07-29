@@ -4,13 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "risk-calculator"
-version = "2.0.0"
+version = "3.0.0"
 description = "Position size calculator for forex and metals trading"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
     "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+web = [
+    "streamlit>=1.35",
+]
+dev = [
+    "pytest>=7.4",
 ]
 
 [project.scripts]
