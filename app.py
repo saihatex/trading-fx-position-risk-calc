@@ -140,79 +140,62 @@ if calculate:
                 lot_rules=lot_rules,
             )
 
-            direction_class = "direction-long" if result.direction.value == "long" else "direction-short"
+            st.divider()
+
+            direction_color = "normal" if result.direction.value == "long" else "inverse"
             direction_label = "▲ LONG" if result.direction.value == "long" else "▼ SHORT"
 
-            tp_row = ""
-            if result.tp_pips is not None:
-                tp_row = f"""
-                <div class="result-row">
-                    <span class="result-label">Take Profit</span>
-                    <span class="result-value">{result.take_profit} &nbsp;({result.tp_pips} pips)</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">R:R Ratio</span>
-                    <span class="result-value">1:{result.rr_ratio}</span>
-                </div>"""
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Direction", direction_label)
+            c2.metric("Lot size", f"{result.lot_size:.2f}")
+            if result.rr_ratio is not None:
+                c3.metric("R:R", f"1:{result.rr_ratio}")
+            else:
+                c3.metric("Effective risk", f"{result.effective_risk_pct:.2f}%")
 
-            spread_row = ""
-            if result.spread_pips > 0:
-                spread_row = f"""
-                <div class="result-row">
-                    <span class="result-label">Spread cost</span>
-                    <span class="result-value">${result.spread_cost:,.2f}</span>
-                </div>"""
+            st.markdown("")
 
             sl_pips_label = f"{result.sl_pips} pips"
             if result.spread_pips > 0:
                 sl_pips_label = f"{result.sl_pips} + {result.spread_pips} spread = {result.effective_sl_pips} pips"
 
-            source_note = ""
-            if result.rate_source:
-                source_note = f'<div class="source-note">Rate source: {result.rate_source}</div>'
+            rows = [
+                ("Stop Loss", f"{result.stop_loss}  ({sl_pips_label})"),
+            ]
+            if result.tp_pips is not None:
+                rows.append(("Take Profit", f"{result.take_profit}  ({result.tp_pips} pips)"))
+                rows.append(("R:R Ratio", f"1:{result.rr_ratio}"))
 
-            lot_warn = ""
+            rows += [
+                ("───", "───"),
+                ("Risk requested", f"{result.risk_pct}%  (${result.risk_amount:,.2f})"),
+                ("Effective risk", f"{result.effective_risk_pct:.2f}%  (${result.potential_loss:,.2f})"),
+            ]
+            if result.spread_pips > 0:
+                rows.append(("Spread cost", f"${result.spread_cost:,.2f}"))
+
+            rows += [
+                ("───", "───"),
+                ("Pip value / lot", f"${result.pip_value_per_lot:.4f}"),
+                ("Lot size", f"{result.lot_size:.2f}"),
+                ("Position value", f"${result.position_value:,.2f}"),
+            ]
+            if result.potential_profit is not None:
+                rows.append(("Potential profit", f"${result.potential_profit:,.2f}"))
+
+            for label, value in rows:
+                if label == "───":
+                    st.markdown("<hr style='margin:4px 0;border-color:#2d2d2d'>", unsafe_allow_html=True)
+                    continue
+                ra, rb = st.columns([1, 1])
+                ra.markdown(f"<span style='color:#888;font-size:0.85rem'>{label}</span>", unsafe_allow_html=True)
+                rb.markdown(f"<span style='font-size:0.85rem'>{value}</span>", unsafe_allow_html=True)
+
             if result.lot_size == 0:
-                lot_warn = '<div style="color:#f87171;margin-top:0.6rem;font-size:0.8rem;">⚠ Lot size below minimum — reduce SL or increase balance/risk.</div>'
+                st.warning("Lot size is below minimum — reduce SL distance or increase balance/risk.")
 
-            st.markdown(f"""
-            <div class="result-box">
-                <div class="result-row">
-                    <span class="result-label">Direction</span>
-                    <span class="result-value {direction_class}">{direction_label}</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Stop Loss</span>
-                    <span class="result-value">{result.stop_loss} &nbsp;({sl_pips_label})</span>
-                </div>
-                {tp_row}
-                <div style="border-top:1px solid #2d2d2d;margin:0.7rem 0;"></div>
-                <div class="result-row">
-                    <span class="result-label">Risk requested</span>
-                    <span class="result-value">{result.risk_pct}% &nbsp;(${result.risk_amount:,.2f})</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Effective risk</span>
-                    <span class="result-value">{result.effective_risk_pct:.2f}% &nbsp;(${result.potential_loss:,.2f})</span>
-                </div>
-                {spread_row}
-                <div style="border-top:1px solid #2d2d2d;margin:0.7rem 0;"></div>
-                <div class="result-row">
-                    <span class="result-label">Pip value / lot</span>
-                    <span class="result-value">${result.pip_value_per_lot:.4f}</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Lot size</span>
-                    <span class="result-value highlight">{result.lot_size:.2f}</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">Position value</span>
-                    <span class="result-value">${result.position_value:,.2f}</span>
-                </div>
-                {lot_warn}
-                {source_note}
-            </div>
-            """, unsafe_allow_html=True)
+            if result.rate_source:
+                st.caption(f"Rate: {result.rate_source}")
 
         except ValueError as e:
             st.error(str(e))
@@ -223,3 +206,4 @@ if calculate:
 
 st.markdown("")
 st.caption("Rates via [ExchangeRate-API](https://open.er-api.com) · [GitHub](https://github.com/saihatex/trading-fx-position-risk-calc)")
+
