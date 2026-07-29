@@ -1,41 +1,29 @@
 # Risk Calculator
 
-Position sizing tool for forex and metals trading. Computes lot size from account risk and trade levels (entry, stop loss, take profit).
+Position sizing for forex and metals — runs in your browser, no install required.
 
-Supports multiple broker/prop firm profiles via `config.yaml`, so pip values and contract specs can differ between FTMO, The5ers, FundedNext, or your own setup.
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://trading-fx-position-risk-calc.streamlit.app)
 
-> **Network note:** by default the calculator fetches a live exchange rate for any pair that needs currency conversion (e.g. USDJPY, EURJPY, USDCAD). This requires an internet connection. Pass `--no-live-rate` to work fully offline — the tool will fall back to the static `pip_value_per_lot` value from `config.yaml`.
+> **Zero setup for end users:** just open the link above. Live exchange rates fetched automatically.
 
-## Features
+---
 
-- Lot size from balance, risk % or fixed cash amount ($), entry, and stop loss price
-- Dual risk mode: specify risk in percent (`--risk 1`) or fixed dollars (`--risk-amount 100`)
-- Automatic direction detection (long/short)
-- Effective risk percentage calculation considering lot size rounding
-- Spread inclusion support (`--spread`) in total risk and position sizing
-- Stop loss and take profit distance in pips
-- Risk/reward ratio from price levels
-- Live pip value calculation via free exchange rate APIs (`open.er-api.com` / `frankfurter.app`) with automatic fallback
-- Universal dynamic pip value for indirect (`USD/XXX`) and cross pairs (`XXX/YYY`)
-- Comprehensive instrument catalog across Forex majors/crosses, metals (`XAUUSD`, `XAGUSD`), indices (`US30`, `NAS100`, `SPX500`, `GER40`), and crypto (`BTCUSD`, `ETHUSD`)
+## Run locally
 
-## Install
+```bash
+git clone https://github.com/saihatex/trading-fx-position-risk-calc.git
+cd trading-fx-position-risk-calc/risk-calculator
+pip install -r requirements.txt
+streamlit run app.py
+```
 
-Dev install (editable, installs `risk-calc` entry point):
+## CLI (advanced)
+
+Install once:
 
 ```bash
 pip install -e .
 ```
-
-Or just install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-Via entry point (after `pip install -e .`):
 
 ```bash
 risk-calc --symbol USDJPY --balance 10000 --risk 1 --entry 163.50 --sl 163.00
