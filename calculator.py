@@ -46,6 +46,7 @@ class PositionResult:
     potential_profit: float | None
     position_value: float
     spread_cost: float
+    rate_source: str | None = None
 
 
 def detect_direction(entry: float, stop_loss: float) -> Direction:
@@ -162,6 +163,7 @@ def calculate_position(
         potential_profit=potential_profit,
         position_value=position_value,
         spread_cost=spread_cost,
+        rate_source=instrument.rate_source,
     )
 
 
@@ -189,10 +191,14 @@ def format_result(result: PositionResult) -> str:
         lines.append(f"Take Profit:      {result.take_profit}  ({result.tp_pips} pips)")
         lines.append(f"R:R:              1:{result.rr_ratio}")
 
+    pip_val_str = f"Pip value / lot:  ${result.pip_value_per_lot:.4f}"
+    if result.rate_source:
+        pip_val_str += f"  [{result.rate_source}]"
+
     lines.extend(
         [
             "",
-            f"Pip value / lot:  ${result.pip_value_per_lot:.4f}",
+            pip_val_str,
             f"Lot size:         {result.lot_size:.2f}",
             f"Position value:   ${result.position_value:,.2f}",
         ]

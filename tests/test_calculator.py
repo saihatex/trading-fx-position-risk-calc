@@ -230,4 +230,49 @@ def test_universal_dynamic_conversion():
     assert eurgbp.pip_value_per_lot == round(10.0 * 1.2700, 4)
 
 
+def test_rate_fetcher_conversion(monkeypatch):
+    from rate_fetcher import clear_cache, get_conversion_rate
+
+    clear_cache()
+    # Mock HTTP response
+    fake_rates = {"result": "success", "rates": {"JPY": 160.0, "GBP": 0.80}}
+
+    def mock_get_json(url, timeout=3.0):
+        return fake_rates
+
+    monkeypatch.setattr("rate_fetcher._http_get_json", mock_get_json)
+
+    rate_jpy, source = get_conversion_rate("USDJPY")
+    assert rate_jpy == 160.0
+    assert "ExchangeRate-API" in source
+
+    rate_gbp, source = get_conversion_rate("GBPUSD")
+    assert rate_gbp == 1.25  # 1 / 0.80 = 1.25
+    clear_cache()
+
+
+def test_resolve_instrument_auto_fetch(monkeypatch):
+    from rate_fetcher import clear_cache
+
+    clear_cache()
+
+    fake_rates = {"result": "success", "rates": {"JPY": 163.7570}}
+
+    def mock_get_json(url, timeout=3.0):
+        return fake_rates
+
+    monkeypatch.setattr("rate_fetcher._http_get_json", mock_get_json)
+
+    profile = get_profile("ftmo")
+    usdjpy = resolve_instrument(profile, "USDJPY")
+
+    # 100,000 * 0.01 / 163.7570 = 6.1066
+    expected = round(1000.0 / 163.7570, 4)
+    assert usdjpy.pip_value_per_lot == expected
+    assert usdjpy.rate_source is not None
+    assert "live:" in usdjpy.rate_source
+    clear_cache()
+
+
+
 

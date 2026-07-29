@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from rate_fetcher import get_conversion_rate
+
 CONFIG_PATH = Path(__file__).parent / "config.yaml"
 
 
@@ -15,6 +17,8 @@ class InstrumentSpec:
     pip_size: float
     contract_size: float
     pip_value_per_lot: float
+    rate_source: str | None = None
+
 
 
 @dataclass(frozen=True)
@@ -77,7 +81,6 @@ def get_profile(name: str | None = None, config: dict[str, Any] | None = None) -
 
 
 def get_required_conversion_pair(symbol: str) -> tuple[str | None, str]:
-    """Returns (conversion_pair_symbol, operation) needed for USD account pip value conversion."""
     symbol = symbol.upper()
     if symbol.endswith("USD"):
         return None, "direct"
@@ -99,6 +102,7 @@ def resolve_instrument(
     profile: Profile,
     symbol: str,
     quote_rate: float | None = None,
+    auto_fetch_rate: bool = True,
 ) -> InstrumentSpec:
     symbol = symbol.upper()
     if symbol not in profile.instruments:
@@ -106,24 +110,42 @@ def resolve_instrument(
         raise KeyError(f"Instrument '{symbol}' not configured for {profile.label}. Available: {available}")
 
     spec = profile.instruments[symbol]
+    conv_pair, mode = get_required_conversion_pair(symbol)
 
-    if quote_rate:
-        conv_pair, mode = get_required_conversion_pair(symbol)
-        if conv_pair:
-            base_pip_amount = spec.contract_size * spec.pip_size
-            if mode == "divide":
-                pip_value = base_pip_amount / quote_rate
-            else:
-                pip_value = base_pip_amount * quote_rate
+    rate_used = quote_rate
+    source_info: str | None = "manual" if quote_rate is not None else None
 
-            return InstrumentSpec(
-                symbol=spec.symbol,
-                pip_size=spec.pip_size,
-                contract_size=spec.contract_size,
-                pip_value_per_lot=round(pip_value, 4),
-            )
+    if conv_pair and rate_used is None and auto_fetch_rate:
+        fetched_rate, fetch_source = get_conversion_rate(conv_pair)
+        if fetched_rate is not None and fetch_source is not None:
+            rate_used = fetched_rate
+            source_info = f"live: {fetch_source} ({conv_pair}={fetched_rate})"
 
-    return spec
+    if conv_pair and rate_used is not None:
+        base_pip_amount = spec.contract_size * spec.pip_size
+        if mode == "divide":
+            pip_value = base_pip_amount / rate_used
+        else:
+            pip_value = base_pip_amount * rate_used
+
+        return InstrumentSpec(
+            symbol=spec.symbol,
+            pip_size=spec.pip_size,
+            contract_size=spec.contract_size,
+            pip_value_per_lot=round(pip_value, 4),
+            rate_source=source_info,
+        )
+
+    if conv_pair:
+        source_info = "static fallback (config.yaml)"
+
+    return InstrumentSpec(
+        symbol=spec.symbol,
+        pip_size=spec.pip_size,
+        contract_size=spec.contract_size,
+        pip_value_per_lot=spec.pip_value_per_lot,
+        rate_source=source_info,
+    )
 
 
 def list_profiles(config: dict[str, Any] | None = None) -> list[str]:

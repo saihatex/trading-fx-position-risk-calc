@@ -13,6 +13,9 @@ from config_loader import (
 )
 
 
+from rate_fetcher import get_conversion_rate
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Position size calculator for forex and metals trading.",
@@ -32,7 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--quote-rate",
         type=float,
-        help="Conversion exchange rate for indirect or cross pairs (e.g. USDJPY rate for EURJPY, GBPUSD rate for EURGBP)",
+        help="Conversion exchange rate for indirect or cross pairs (e.g. USDJPY rate for EURJPY). Auto-fetched if omitted.",
+    )
+    parser.add_argument(
+        "--no-live-rate",
+        action="store_true",
+        help="Disable automatic live exchange rate fetching from API and fallback to static config values.",
     )
     parser.add_argument(
         "--spread",
@@ -108,8 +116,20 @@ def run_interactive() -> None:
     quote_rate = None
     conv_pair, mode = get_required_conversion_pair(symbol)
     if conv_pair:
-        op_desc = f"needed for {symbol}"
-        quote_rate = prompt_optional_float(f"Rate for {conv_pair} ({op_desc})")
+        fetched_rate, source = get_conversion_rate(conv_pair)
+        if fetched_rate is not None and source is not None:
+            print(f"Live rate fetched for {conv_pair}: {fetched_rate} [{source}]")
+            user_val = input(f"Rate for {conv_pair} (Press Enter to use {fetched_rate}, or type custom rate): ").strip()
+            if user_val:
+                try:
+                    quote_rate = float(user_val.replace(",", "."))
+                except ValueError:
+                    quote_rate = fetched_rate
+            else:
+                quote_rate = fetched_rate
+        else:
+            print(f"Could not fetch live rate for {conv_pair}.")
+            quote_rate = prompt_optional_float(f"Rate for {conv_pair} (press Enter to use static config default)")
 
     balance = prompt_float("Account balance")
     risk_pct, risk_amount = prompt_risk()
@@ -129,6 +149,7 @@ def run_interactive() -> None:
         tp=tp,
         quote_rate=quote_rate,
         spread=spread,
+        auto_fetch_rate=True,
     )
 
 
@@ -143,9 +164,15 @@ def _run_calculation(
     tp: float | None,
     quote_rate: float | None,
     spread: float = 0.0,
+    auto_fetch_rate: bool = True,
 ) -> None:
     profile = get_profile(profile_name)
-    instrument = resolve_instrument(profile, symbol, quote_rate=quote_rate)
+    instrument = resolve_instrument(
+        profile,
+        symbol,
+        quote_rate=quote_rate,
+        auto_fetch_rate=auto_fetch_rate,
+    )
     lot_rules = get_lot_rules()
 
     trade = TradeInput(
@@ -189,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         tp=args.tp,
         quote_rate=args.quote_rate,
         spread=args.spread,
+        auto_fetch_rate=not args.no_live_rate,
     )
     return 0
 
