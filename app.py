@@ -91,14 +91,13 @@ with col6:
 col7, col8, col9 = st.columns(3)
 
 with col7:
-    entry = st.number_input("Entry Price", min_value=0.0001, value=0.0, step=0.0001, format="%.5f")
+    entry = st.number_input("Entry Price", min_value=0.0001, value=None, step=0.0001, format="%.5f", placeholder="e.g. 1.08500")
 
 with col8:
-    sl = st.number_input("Stop Loss", min_value=0.0001, value=0.0, step=0.0001, format="%.5f")
+    sl = st.number_input("Stop Loss", min_value=0.0001, value=None, step=0.0001, format="%.5f", placeholder="e.g. 1.08300")
 
 with col9:
-    tp = st.number_input("Take Profit (opt.)", min_value=0.0, value=0.0, step=0.0001, format="%.5f")
-    tp = tp if tp > 0 else None
+    tp = st.number_input("Take Profit (opt.)", min_value=0.0001, value=None, step=0.0001, format="%.5f", placeholder="optional")
 
 no_live_rate = st.toggle("Offline mode (use static rates)", value=False)
 
@@ -107,11 +106,11 @@ calculate = st.button("Calculate", type="primary", use_container_width=True)
 
 if calculate:
     errors = []
-    if entry <= 0:
+    if not entry:
         errors.append("Enter a valid Entry price.")
-    if sl <= 0:
+    if not sl:
         errors.append("Enter a valid Stop Loss.")
-    if entry > 0 and sl > 0 and entry == sl:
+    if entry and sl and entry == sl:
         errors.append("Entry and Stop Loss cannot be equal.")
 
     if errors:
