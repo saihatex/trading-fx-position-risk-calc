@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.request
 from typing import Any
 
-_RATES_CACHE: dict[str, Any] | None = None
+CACHE_TTL_SECONDS = 300
+
+_RATES_CACHE: dict[str, float] | None = None
 _CACHE_SOURCE: str | None = None
+_CACHE_TIMESTAMP: float = 0.0
 
 PRIMARY_API_URL = "https://open.er-api.com/v6/latest/USD"
 FALLBACK_API_URL = "https://api.frankfurter.app/latest?from=USD"
@@ -14,7 +18,7 @@ FALLBACK_API_URL = "https://api.frankfurter.app/latest?from=USD"
 def _http_get_json(url: str, timeout: float = 3.0) -> dict[str, Any] | None:
     req = urllib.request.Request(
         url,
-        headers={"User-Agent": "risk-calculator/1.0"},
+        headers={"User-Agent": "risk-calculator/2.0"},
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as response:
@@ -26,26 +30,29 @@ def _http_get_json(url: str, timeout: float = 3.0) -> dict[str, Any] | None:
     return None
 
 
-def fetch_usd_rates(timeout: float = 3.0, force_refresh: bool = False) -> tuple[dict[str, float] | None, str | None]:
-    global _RATES_CACHE, _CACHE_SOURCE
+def _cache_is_valid() -> bool:
+    return _RATES_CACHE is not None and (time.monotonic() - _CACHE_TIMESTAMP) < CACHE_TTL_SECONDS
 
-    if _RATES_CACHE is not None and not force_refresh:
+
+def fetch_usd_rates(timeout: float = 3.0, force_refresh: bool = False) -> tuple[dict[str, float] | None, str | None]:
+    global _RATES_CACHE, _CACHE_SOURCE, _CACHE_TIMESTAMP
+
+    if not force_refresh and _cache_is_valid():
         return _RATES_CACHE, _CACHE_SOURCE
 
     data = _http_get_json(PRIMARY_API_URL, timeout=timeout)
     if data and data.get("result") == "success" and "rates" in data:
-        rates = {str(k).upper(): float(v) for k, v in data["rates"].items()}
-        _RATES_CACHE = rates
+        _RATES_CACHE = {str(k).upper(): float(v) for k, v in data["rates"].items()}
         _CACHE_SOURCE = "ExchangeRate-API (open.er-api.com)"
+        _CACHE_TIMESTAMP = time.monotonic()
         return _RATES_CACHE, _CACHE_SOURCE
 
     data = _http_get_json(FALLBACK_API_URL, timeout=timeout)
     if data and "rates" in data:
-        raw_rates = data["rates"]
-        rates = {str(k).upper(): float(v) for k, v in raw_rates.items()}
-        rates["USD"] = 1.0
-        _RATES_CACHE = rates
+        _RATES_CACHE = {str(k).upper(): float(v) for k, v in data["rates"].items()}
+        _RATES_CACHE["USD"] = 1.0
         _CACHE_SOURCE = "Frankfurter API (frankfurter.app)"
+        _CACHE_TIMESTAMP = time.monotonic()
         return _RATES_CACHE, _CACHE_SOURCE
 
     return None, None
@@ -75,6 +82,7 @@ def get_conversion_rate(
 
 
 def clear_cache() -> None:
-    global _RATES_CACHE, _CACHE_SOURCE
+    global _RATES_CACHE, _CACHE_SOURCE, _CACHE_TIMESTAMP
     _RATES_CACHE = None
     _CACHE_SOURCE = None
+    _CACHE_TIMESTAMP = 0.0

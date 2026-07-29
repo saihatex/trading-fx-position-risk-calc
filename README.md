@@ -21,13 +21,27 @@ Supports multiple broker/prop firm profiles via `config.yaml`, so pip values and
 
 ## Install
 
+Dev install (editable, installs `risk-calc` entry point):
+
+```bash
+pip install -e .
+```
+
+Or just install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Usage
 
-Interactive mode:
+Via entry point (after `pip install -e .`):
+
+```bash
+risk-calc --symbol USDJPY --balance 10000 --risk 1 --entry 163.50 --sl 163.00
+```
+
+Or directly:
 
 ```bash
 python cli.py --interactive
@@ -130,6 +144,8 @@ Each profile defines instrument-level:
 | `contract_size` | Units per 1.0 lot |
 | `pip_value_per_lot` | Fallback pip value used when `--no-live-rate` is set or API is unreachable |
 
+> **Cache TTL:** live rates are cached for 5 minutes per process. For a long-running service (e.g. Streamlit), use `force_refresh=True` or call `rate_fetcher.clear_cache()` between requests to avoid stale rates.
+
 ### Dynamic Pip Value Conversions
 
 For pairs where USD is not the quote currency, the calculator auto-fetches the required rate:
@@ -149,7 +165,9 @@ python -m pytest tests/ -v
 
 - [ ] Account currency conversions for non-USD accounts (e.g., EUR/GBP accounts trading USD pairs)
 - [ ] Export calculation history to CSV/JSON
-- [ ] Add pyproject.toml entry point (`risk-calc` CLI command)
+- [x] Live exchange rate fetching (v2)
+- [x] Entry point `risk-calc` via pyproject.toml (v2)
+- [x] TTL cache on live rates (v2)
 
 ## License
 
