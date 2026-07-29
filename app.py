@@ -16,8 +16,9 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap');
 
-html, body, [class*="css"] {
+html, body, [class*="css"], .stApp, [data-testid="stHeader"], [data-testid="stAppViewContainer"], .main {
     font-family: 'Inter', sans-serif;
+    background-color: #000000 !important;
 }
 
 .block-container {
@@ -183,7 +184,9 @@ if go:
             def sep() -> str:
                 return '<hr class="sep">'
 
-            lines: list[str] = ['<div class="result-block">']
+            lines: list[str] = ['<div style="margin-top:2rem">']
+
+            lines.append('<div class="result-block">')
 
             lines.append(row("Direction", dir_label, f"val {dir_class}"))
             lines.append(row("Stop Loss", f"{result.stop_loss}  ({sl_label})"))
@@ -210,12 +213,7 @@ if go:
 
             lines.append('</div>')
 
-            lines.append(f'''
-            <div class="lot-block">
-                <span class="lot-label">Lot size</span>
-                <span class="lot-value">{result.lot_size:.2f}</span>
-            </div>
-            ''')
+            lines.append(f'<div class="lot-block"><span class="lot-label">Lot size</span><span class="lot-value">{result.lot_size:.2f}</span></div>')
 
             if result.lot_size == 0:
                 lines.append('<div style="color:#555;font-size:0.78rem;margin-top:0.4rem">Lot below minimum — reduce SL or increase risk.</div>')
@@ -223,6 +221,7 @@ if go:
             if result.rate_source:
                 lines.append(f'<div class="source-line">rate  {result.rate_source}</div>')
 
+            lines.append('</div>')
             st.markdown("\n".join(lines), unsafe_allow_html=True)
 
         except ValueError as e:
