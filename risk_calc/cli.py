@@ -3,17 +3,15 @@ from __future__ import annotations
 import argparse
 import sys
 
-from calculator import TradeInput, calculate_position, format_result
-from config_loader import (
+from risk_calc.calculator import TradeInput, calculate_position, format_result
+from risk_calc.config_loader import (
     get_lot_rules,
     get_profile,
     get_required_conversion_pair,
     list_profiles,
     resolve_instrument,
 )
-
-
-from rate_fetcher import get_conversion_rate
+from risk_calc.rate_fetcher import get_conversion_rate
 
 
 def build_parser() -> argparse.ArgumentParser:

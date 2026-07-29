@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 
-from calculator import TradeInput, calculate_position
-from config_loader import get_lot_rules, get_profile, list_profiles, resolve_instrument
+from risk_calc.calculator import TradeInput, calculate_position
+from risk_calc.config_loader import get_lot_rules, get_profile, list_profiles, resolve_instrument
 
 st.set_page_config(page_title="Risk Calculator", page_icon=None, layout="centered")
 

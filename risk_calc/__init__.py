@@ -7,5 +7,5 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 
 def main(argv: list[str] | None = None) -> int:
-    from cli import main as cli_main
+    from risk_calc.cli import main as cli_main
     return cli_main(argv)

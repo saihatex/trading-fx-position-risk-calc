@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from config_loader import InstrumentSpec, LotRules
+from risk_calc.config_loader import InstrumentSpec, LotRules
 
 
 class Direction(str, Enum):

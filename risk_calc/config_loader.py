@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from rate_fetcher import get_conversion_rate
+from risk_calc.rate_fetcher import get_conversion_rate
 
 CONFIG_PATH = Path(__file__).parent / "config.yaml"
 

@@ -1,7 +1,7 @@
 import pytest
 
-from calculator import Direction, TradeInput, calculate_position
-from config_loader import get_lot_rules, get_profile, resolve_instrument
+from risk_calc.calculator import Direction, TradeInput, calculate_position
+from risk_calc.config_loader import get_lot_rules, get_profile, resolve_instrument
 
 
 def test_long_position_from_prices():
@@ -144,7 +144,7 @@ def test_spread_inclusion():
 
 
 def test_cli_parser_args():
-    from cli import build_parser
+    from risk_calc.cli import build_parser
 
     parser = build_parser()
     args = parser.parse_args([
@@ -231,7 +231,7 @@ def test_universal_dynamic_conversion():
 
 
 def test_rate_fetcher_conversion(monkeypatch):
-    from rate_fetcher import clear_cache, get_conversion_rate
+    from risk_calc.rate_fetcher import clear_cache, get_conversion_rate
 
     clear_cache()
     # Mock HTTP response
@@ -240,7 +240,7 @@ def test_rate_fetcher_conversion(monkeypatch):
     def mock_get_json(url, timeout=3.0):
         return fake_rates
 
-    monkeypatch.setattr("rate_fetcher._http_get_json", mock_get_json)
+    monkeypatch.setattr("risk_calc.rate_fetcher._http_get_json", mock_get_json)
 
     rate_jpy, source = get_conversion_rate("USDJPY")
     assert rate_jpy == 160.0
@@ -252,7 +252,7 @@ def test_rate_fetcher_conversion(monkeypatch):
 
 
 def test_resolve_instrument_auto_fetch(monkeypatch):
-    from rate_fetcher import clear_cache
+    from risk_calc.rate_fetcher import clear_cache
 
     clear_cache()
 
@@ -261,7 +261,7 @@ def test_resolve_instrument_auto_fetch(monkeypatch):
     def mock_get_json(url, timeout=3.0):
         return fake_rates
 
-    monkeypatch.setattr("rate_fetcher._http_get_json", mock_get_json)
+    monkeypatch.setattr("risk_calc.rate_fetcher._http_get_json", mock_get_json)
 
     profile = get_profile("ftmo")
     usdjpy = resolve_instrument(profile, "USDJPY")
